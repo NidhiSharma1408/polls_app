@@ -2,16 +2,29 @@ from django.shortcuts import render,get_object_or_404
 from django.http import HttpResponse,HttpResponseRedirect
 from .models import Question,Choice
 from django.urls import reverse
-
-def index(request):
+from django.views import generic
+from django.utils import timezone
+""" def index(request):
     question_list = Question.objects.order_by('-pub_date')[:5]
     return render(request, "polls/index.html", { 'question_list' : question_list})
     #return HttpResponse("hello world. we are at the polls index.")
+"""
 
-def detail(request,question_id):
-    question =  Question.objects.get(pk=question_id)
-    return render(request, 'polls/detail.html', {'question': question})
-   # return HttpResponse("hello world. we are at the polls detail")
+class IndexView(generic.ListView):
+    template_name = 'polls/index.html'
+    context_object_name = 'latest_question_list'
+    def get_queryset(self):
+        return Question.objects.filter( pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
+
+
+class DetailView(generic.DetailView):
+    template_name = 'polls/detail.html'
+    model = Question
+
+
+class ResultView(generic.DetailView):
+    template_name = 'polls/result.html'
+    model = Question
 
 def vote(request,question_id):
     question = get_object_or_404(Question, pk=question_id)
@@ -23,7 +36,5 @@ def vote(request,question_id):
         selected_choice.votes +=1
         selected_choice.save()
         return HttpResponseRedirect(reverse('polls:result',args=(question.id,)))
-
-def result(request,question_id):
-    question = get_object_or_404(Question, pk = question_id)
-    return render(request, 'polls/result.html',{ 'question' : question})
+    
+    
